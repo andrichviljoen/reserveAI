@@ -22,10 +22,13 @@ def signup(payload: AuthRequest):
 def login(payload: AuthRequest):
     try:
         res = get_supabase().auth.sign_in_with_password({"email": payload.email, "password": payload.password})
+        # Check if login was actually successful
+        if not res.user:
+            raise Exception("Login failed: User object is empty")
         return {"user": sanitize_json(res.user.__dict__), "session": sanitize_json(res.session.__dict__)}
     except Exception as exc:
-        raise HTTPException(status_code=401, detail="Invalid credentials") from exc
-
+        print(f"DEBUG AUTH ERROR: {str(exc)}") # This will print the REAL error to your VS Code terminal
+        raise HTTPException(status_code=401, detail=str(exc))
 
 @router.post("/logout")
 def logout():
