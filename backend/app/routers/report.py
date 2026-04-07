@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from fastapi import APIRouter
 
-from app.models.schemas import ReportRequest, ReportResponse
-from app.services.reporting import generate_excel, generate_notebook_context, generate_word
+from app.models.schemas import ChatRequest, ChatResponse, ReportRequest, ReportResponse
+from app.services.reporting import chat_completion, generate_excel, generate_notebook_context, generate_word
 
 router = APIRouter(tags=["reporting"])
 
@@ -16,5 +16,15 @@ def generate_report(payload: ReportRequest):
         name, media, f64 = generate_excel(payload.context_data, payload.actuary_notes, payload.openai_api_key)
     else:
         name, media, f64 = generate_notebook_context(payload.context_data, payload.actuary_notes)
-
     return ReportResponse(file_name=name, media_type=media, file_base64=f64)
+
+
+@router.post("/chat", response_model=ChatResponse)
+def ai_chat(payload: ChatRequest):
+    content = chat_completion(
+        payload.context_data,
+        payload.actuary_notes,
+        payload.messages,
+        payload.openai_api_key,
+    )
+    return ChatResponse(content=content)
