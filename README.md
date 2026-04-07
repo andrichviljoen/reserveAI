@@ -1,20 +1,34 @@
-# AI Actuarial Reserving Suite (FastAPI + React)
+# AI Actuarial Reserving Suite (Decoupled SaaS)
 
-This codebase now mirrors the Streamlit workflow with a decoupled architecture:
-- Supabase auth + cloud workspaces + uploaded file storage
-- Chainladder deterministic and bootstrap ODP actuarial engine
-- AvE and Barnett-Zehnwirth residual diagnostics
-- Word/Excel/Notebook exports
-- A(I)ctuary chat via backend OpenAI endpoint
+Production-oriented split architecture:
+- **Backend**: FastAPI + chainladder + Supabase + OpenAI + python-docx + xlsxwriter
+- **Frontend**: React + Vite + Tailwind + Lucide + Recharts
 
-## Backend endpoints
+## Backend API
 - `POST /auth/signup`
 - `POST /auth/login`
 - `POST /auth/logout`
 - `POST /auth/workspaces/save`
 - `GET /auth/workspaces/{user_id}`
 - `POST /upload`
-- `GET /upload/files/{user_id}`
 - `POST /analyze`
 - `POST /generate-report`
-- `POST /chat`
+
+## Run
+
+### Backend
+```bash
+cd backend
+python -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+uvicorn app.main:app --reload
+```
+
+### Frontend
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Set `VITE_API_BASE` for frontend and `.env` in backend for `SUPABASE_URL`, `SUPABASE_KEY`, and optional `OPENAI_API_KEY`.

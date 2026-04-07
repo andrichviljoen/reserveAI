@@ -22,10 +22,13 @@ def signup(payload: AuthRequest):
 def login(payload: AuthRequest):
     try:
         res = get_supabase().auth.sign_in_with_password({"email": payload.email, "password": payload.password})
+        # Check if login was actually successful
+        if not res.user:
+            raise Exception("Login failed: User object is empty")
         return {"user": sanitize_json(res.user.__dict__), "session": sanitize_json(res.session.__dict__)}
     except Exception as exc:
-        raise HTTPException(status_code=401, detail=f"Login failed: {exc}") from exc
-
+        print(f"DEBUG AUTH ERROR: {str(exc)}") # This will print the REAL error to your VS Code terminal
+        raise HTTPException(status_code=401, detail=str(exc))
 
 @router.post("/logout")
 def logout():
@@ -35,36 +38,23 @@ def logout():
 
 @router.post("/workspaces/save")
 def save_workspace(payload: WorkspaceSaveRequest):
-    try:
-        res = (
-            get_supabase()
-            .table("workspaces")
-            .upsert(
-                {
-                    "user_id": payload.user_id,
-                    "workspace_name": payload.workspace_name,
-                    "context_data": payload.context_data,
-                },
-                on_conflict="user_id,workspace_name",
-            )
-            .execute()
+    res = (
+        get_supabase()
+        .table("workspaces")
+        .upsert(
+            {
+                "user_id": payload.user_id,
+                "workspace_name": payload.workspace_name,
+                "context_data": payload.context_data,
+            },
+            on_conflict="user_id,workspace_name",
         )
-        return sanitize_json(res.data)
-    except Exception as exc:
-        raise HTTPException(status_code=400, detail=f"Workspace save failed: {exc}") from exc
+        .execute()
+    )
+    return sanitize_json(res.data)
 
 
 @router.get("/workspaces/{user_id}")
 def list_workspaces(user_id: str):
-    try:
-        res = (
-            get_supabase()
-            .table("workspaces")
-            .select("workspace_name, context_data, created_at")
-            .eq("user_id", user_id)
-            .order("created_at", desc=True)
-            .execute()
-        )
-        return sanitize_json(res.data or [])
-    except Exception as exc:
-        raise HTTPException(status_code=400, detail=f"Workspace fetch failed: {exc}") from exc
+    res = get_supabase().table("workspaces").select("workspace_name, context_data").eq("user_id", user_id).execute()
+    return sanitize_json(res.data)
